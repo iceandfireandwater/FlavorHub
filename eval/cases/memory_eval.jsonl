@@ -1,0 +1,80 @@
+{"id": "mem_no_poison_10", "kind": "no_poison", "turns": ["我叫甜甜，在青岛做会计"], "probe": "我之前有没有提过我自己的名字？", "expect_any": ["甜甜"], "forbid_any": ["没有提到", "没有提过", "并没有提到", "无法提供", "没有说过"]}
+{"id": "mem_multi_04", "kind": "multi", "turns": ["我有痛风，不能吃海鲜", "周末想做点好的"], "probe": "把我说过的要求都列一下", "expect_all": [["痛风", "嘌呤"], ["海鲜"]]}
+{"id": "mem_constraint_08", "kind": "constraint", "turns": ["我胃不好，吃不了太油腻的", "还有什么别的推荐"], "probe": "我之前说过什么忌口或饮食要求？", "expect_any": ["胃病", "胃不好", "肠胃", "油腻", "少油", "少放油", "油"]}
+{"id": "mem_update_01", "kind": "update", "turns": ["我不吃香菜", "我改主意了，香菜那个限制现在不用管了"], "probe": "我现在可以吃香菜了吗？请只回答「可以」或「不可以」。", "expect_any": ["可以"], "forbid_any": ["不可以"]}
+{"id": "mem_preference_01", "kind": "preference", "turns": ["我口味清淡，喜欢少油少盐", "你平时都做什么菜"], "probe": "我的口味偏好是什么？", "expect_any": ["清淡", "少油"]}
+{"id": "mem_update_06", "kind": "update", "turns": ["我最近在避开花生", "我改主意了，花生那个限制现在不用管了"], "probe": "我现在可以吃花生了吗？请只回答「可以」或「不可以」。", "expect_any": ["可以"], "forbid_any": ["不可以"]}
+{"id": "mem_facts_09", "kind": "facts", "turns": ["我是阿豪，在厦门做自由职业"], "probe": "阿豪来自哪里？", "expect_any": ["厦门"], "forbid_any": []}
+{"id": "mem_no_poison_07", "kind": "no_poison", "turns": ["我是老周，重庆的厨师，干了十几年"], "probe": "我之前有没有提过我自己的名字？", "expect_any": ["老周", "周"], "forbid_any": ["没有提到", "没有提过", "并没有提到", "无法提供", "没有说过"]}
+{"id": "mem_update_08", "kind": "update", "turns": ["我最近不吃生冷的东西", "我改主意了，生冷那个限制现在不用管了"], "probe": "我现在可以吃生冷的东西了吗？请只回答「可以」或「不可以」。", "expect_any": ["可以"], "forbid_any": ["不可以"]}
+{"id": "mem_preference_10", "kind": "preference", "turns": ["我早餐喜欢喝粥，常熬小米粥", "适合带饭的有吗"], "probe": "我的口味偏好是什么？", "expect_any": ["粥品", "小米粥"]}
+{"id": "mem_facts_16", "kind": "facts", "turns": ["我是大牛，郑州的外卖小哥"], "probe": "你还记得我的名字和所在城市吗？", "expect_all": [["大牛"], ["郑州"]], "forbid_any": []}
+{"id": "mem_isolation_03", "kind": "isolation", "other_user_lines": ["我是阿豪，在厦门做自由职业"], "turns": ["我不吃辣"], "probe": "你知道有个人叫阿豪吗？他是做什么的？", "forbid_any": ["厦门", "自由职业"]}
+{"id": "mem_update_10", "kind": "update", "turns": ["我做菜不放葱姜蒜", "我改主意了，葱姜蒜那个限制现在不用管了"], "probe": "我现在可以放葱姜蒜了吗？请只回答「可以」或「不可以」。", "expect_any": ["可以"], "forbid_any": ["不可以"]}
+{"id": "mem_preference_09", "kind": "preference", "turns": ["我爱吃凉拌菜和沙拉", "周末想做点好的"], "probe": "我的口味偏好是什么？", "expect_any": ["凉拌", "沙拉"]}
+{"id": "mem_no_poison_03", "kind": "no_poison", "turns": ["我是老王，西安人，退休教师"], "probe": "我之前有没有提过我自己的名字？", "expect_any": ["老王"], "forbid_any": ["没有提到", "没有提过", "并没有提到", "无法提供", "没有说过"]}
+{"id": "mem_multi_03", "kind": "multi", "turns": ["我乳糖不耐，不能喝牛奶", "有没有下饭的"], "probe": "把我说过的要求都列一下", "expect_all": [["乳糖不耐", "乳糖", "不耐"], ["牛奶", "奶"]]}
+{"id": "mem_constraint_10", "kind": "constraint", "turns": ["我不吃香菜，也不吃动物内脏", "想学个简单的"], "probe": "我之前说过什么忌口或饮食要求？", "expect_any": ["香菜", "动物内脏", "内脏"]}
+{"id": "mem_update_07", "kind": "update", "turns": ["我最近不吃海鲜", "我改主意了，海鲜那个限制现在不用管了"], "probe": "我现在可以吃海鲜了吗？请只回答「可以」或「不可以」。", "expect_any": ["可以"], "forbid_any": ["不可以"]}
+{"id": "mem_isolation_07", "kind": "isolation", "other_user_lines": ["我叫大山，在拉萨做导游"], "turns": ["我不吃辣"], "probe": "你知道有个人叫大山吗？他是做什么的？", "forbid_any": ["拉萨", "导游"]}
+{"id": "mem_facts_02", "kind": "facts", "turns": ["我是小雨啦，人在上海，职业是设计师"], "probe": "你还记得我的名字和所在城市吗？", "expect_all": [["小雨"], ["上海"]], "forbid_any": []}
+{"id": "mem_isolation_01", "kind": "isolation", "other_user_lines": ["我姓周，在重庆做厨师十几年了"], "turns": ["我不吃辣"], "probe": "你知道有个人叫老周吗？他是做什么的？", "forbid_any": ["重庆", "厨师"]}
+{"id": "mem_update_04", "kind": "update", "turns": ["我最近不太想吃鸡蛋", "我改主意了，鸡蛋那个限制现在不用管了"], "probe": "我现在可以吃鸡蛋了吗？请只回答「可以」或「不可以」。", "expect_any": ["可以"], "forbid_any": ["不可以"]}
+{"id": "mem_constraint_03", "kind": "constraint", "turns": ["我有高血压，做菜不能太咸", "随便问一句，谢谢"], "probe": "我之前说过什么忌口或饮食要求？", "expect_any": ["高血压", "血压", "太咸", "咸", "少盐", "少放盐", "少放点盐", "清淡", "控盐"]}
+{"id": "mem_multi_08", "kind": "multi", "turns": ["我不吃辣，另外对花生过敏", "有没有半小时能做完的"], "probe": "把我说过的要求都列一下", "expect_all": [["花生", "坚果"], ["不吃辣", "辣"]]}
+{"id": "mem_constraint_04", "kind": "constraint", "turns": ["家里有糖尿病人，做菜不能放糖", "你平时都做什么菜"], "probe": "我之前说过什么忌口或饮食要求？", "expect_any": ["糖尿病", "血糖", "糖"]}
+{"id": "mem_constraint_05", "kind": "constraint", "turns": ["我怀孕了，不吃生冷的东西", "来点凉菜吧"], "probe": "我之前说过什么忌口或饮食要求？", "expect_any": ["孕妇", "怀孕", "孕期", "生冷", "生食", "凉的", "凉拌", "冰"]}
+{"id": "mem_no_poison_04", "kind": "no_poison", "turns": ["我是陈叔，跑长沙的出租"], "probe": "我之前有没有提过我自己的名字？", "expect_any": ["陈叔"], "forbid_any": ["没有提到", "没有提过", "并没有提到", "无法提供", "没有说过"]}
+{"id": "mem_no_poison_08", "kind": "no_poison", "turns": ["我网名叫米粒，在南京当护士"], "probe": "我之前有没有提过我自己的名字？", "expect_any": ["米粒"], "forbid_any": ["没有提到", "没有提过", "并没有提到", "无法提供", "没有说过"]}
+{"id": "mem_preference_04", "kind": "preference", "turns": ["我喜欢煲汤，经常炖老火汤", "再说两个家常菜"], "probe": "我的口味偏好是什么？", "expect_any": ["煲汤", "老火汤"]}
+{"id": "mem_multi_02", "kind": "multi", "turns": ["我怀孕了，不吃生冷的东西", "想学个简单的"], "probe": "把我说过的要求都列一下", "expect_all": [["孕妇", "怀孕", "孕期"], ["生冷", "生食", "凉的", "凉拌", "冰"]]}
+{"id": "mem_preference_03", "kind": "preference", "turns": ["我特别爱吃面食，经常自己蒸馒头", "有没有适合早餐的"], "probe": "我的口味偏好是什么？", "expect_any": ["面食", "馒头"]}
+{"id": "mem_facts_08", "kind": "facts", "turns": ["我是米粒，人在南京，职业是护士"], "probe": "你还记得我的名字和所在城市吗？", "expect_all": [["米粒"], ["南京"]], "forbid_any": []}
+{"id": "mem_multi_06", "kind": "multi", "turns": ["孩子对鸡蛋过敏，不能放鸡蛋", "做给两个人吃"], "probe": "把我说过的要求都列一下", "expect_all": [["鸡蛋过敏", "鸡蛋", "过敏"], ["鸡蛋"]]}
+{"id": "mem_facts_03", "kind": "facts", "turns": ["我叫老王，在西安，退休前是中学老师"], "probe": "老王来自哪里？", "expect_any": ["西安"], "forbid_any": []}
+{"id": "mem_constraint_01", "kind": "constraint", "turns": ["我不吃辣，另外对花生过敏", "推荐一道菜吧"], "probe": "我之前说过什么忌口或饮食要求？", "expect_any": ["花生", "坚果", "不吃辣", "辣"]}
+{"id": "mem_preference_07", "kind": "preference", "turns": ["我爱烘焙，常做蛋糕和面包", "想学个简单的"], "probe": "我的口味偏好是什么？", "expect_any": ["烘焙", "蛋糕"]}
+{"id": "mem_constraint_07", "kind": "constraint", "turns": ["我有痛风，不能吃海鲜", "再说两个家常菜"], "probe": "我之前说过什么忌口或饮食要求？", "expect_any": ["痛风", "嘌呤", "海鲜"]}
+{"id": "mem_no_poison_01", "kind": "no_poison", "turns": ["我是阿强，在成都写代码"], "probe": "我之前有没有提过我自己的名字？", "expect_any": ["阿强"], "forbid_any": ["没有提到", "没有提过", "并没有提到", "无法提供", "没有说过"]}
+{"id": "mem_constraint_09", "kind": "constraint", "turns": ["孩子对鸡蛋过敏，不能放鸡蛋", "中午吃什么好"], "probe": "我之前说过什么忌口或饮食要求？", "expect_any": ["鸡蛋过敏", "鸡蛋", "过敏", "鸡蛋"]}
+{"id": "mem_facts_06", "kind": "facts", "turns": ["我是小林，深圳的大学生"], "probe": "你还记得我的名字和所在城市吗？", "expect_all": [["小林"], ["深圳"]], "forbid_any": []}
+{"id": "mem_facts_07", "kind": "facts", "turns": ["我姓周，在重庆做厨师十几年了"], "probe": "老周来自哪里？", "expect_any": ["重庆"], "forbid_any": []}
+{"id": "mem_multi_01", "kind": "multi", "turns": ["家里有糖尿病人，做菜不能放糖", "中午吃什么好"], "probe": "把我说过的要求都列一下", "expect_all": [["糖尿病", "血糖"], ["糖"]]}
+{"id": "mem_isolation_04", "kind": "isolation", "other_user_lines": ["我是甜甜，青岛的一名会计"], "turns": ["我不吃辣"], "probe": "你知道有个人叫甜甜吗？他是做什么的？", "forbid_any": ["青岛", "会计"]}
+{"id": "mem_facts_10", "kind": "facts", "turns": ["我是甜甜，青岛的一名会计"], "probe": "你还记得我的名字和所在城市吗？", "expect_all": [["甜甜"], ["青岛"]], "forbid_any": []}
+{"id": "mem_update_03", "kind": "update", "turns": ["我不吃动物内脏", "我改主意了，动物内脏那个限制现在不用管了"], "probe": "我现在可以吃动物内脏了吗？请只回答「可以」或「不可以」。", "expect_any": ["可以"], "forbid_any": ["不可以"]}
+{"id": "mem_constraint_06", "kind": "constraint", "turns": ["我乳糖不耐，不能喝牛奶", "有没有适合早餐的"], "probe": "我之前说过什么忌口或饮食要求？", "expect_any": ["乳糖不耐", "乳糖", "不耐", "牛奶", "奶"]}
+{"id": "mem_multi_07", "kind": "multi", "turns": ["我不吃香菜，也不吃动物内脏", "想少放点油的"], "probe": "把我说过的要求都列一下", "expect_all": [["香菜"], ["动物内脏", "内脏"]]}
+{"id": "mem_update_09", "kind": "update", "turns": ["我最近不吃豆制品", "我改主意了，豆制品那个限制现在不用管了"], "probe": "我现在可以吃豆制品了吗？请只回答「可以」或「不可以」。", "expect_any": ["可以"], "forbid_any": ["不可以"]}
+{"id": "mem_facts_11", "kind": "facts", "turns": ["我是老赵，哈尔滨的，跑长途货运"], "probe": "老赵来自哪里？", "expect_any": ["哈尔滨"], "forbid_any": []}
+{"id": "mem_no_poison_09", "kind": "no_poison", "turns": ["我叫阿豪，厦门，自由职业者"], "probe": "我之前有没有提过我自己的名字？", "expect_any": ["阿豪"], "forbid_any": ["没有提到", "没有提过", "并没有提到", "无法提供", "没有说过"]}
+{"id": "mem_facts_01", "kind": "facts", "turns": ["我叫阿强，住在成都，是个程序员"], "probe": "阿强来自哪里？", "expect_any": ["成都"], "forbid_any": []}
+{"id": "mem_update_02", "kind": "update", "turns": ["我最近不吃辣，想清淡点", "我改主意了，辣那个限制现在不用管了"], "probe": "我现在可以吃辣了吗？请只回答「可以」或「不可以」。", "expect_any": ["可以"], "forbid_any": ["不可以"]}
+{"id": "mem_isolation_05", "kind": "isolation", "other_user_lines": ["我是老赵，哈尔滨的，跑长途货运"], "turns": ["我不吃辣"], "probe": "你知道有个人叫老赵吗？他是做什么的？", "forbid_any": ["哈尔滨", "货车司机"]}
+{"id": "mem_preference_08", "kind": "preference", "turns": ["我喜欢炖菜，爱用小火慢炖", "有没有下饭的"], "probe": "我的口味偏好是什么？", "expect_any": ["炖菜", "慢炖"]}
+{"id": "mem_isolation_06", "kind": "isolation", "other_user_lines": ["我是桃子，昆明的小学老师"], "turns": ["我不吃辣"], "probe": "你知道有个人叫桃子吗？他是做什么的？", "forbid_any": ["昆明", "小学老师"]}
+{"id": "mem_isolation_10", "kind": "isolation", "other_user_lines": ["我是大牛，郑州的外卖小哥"], "turns": ["我不吃辣"], "probe": "你知道有个人叫大牛吗？他是做什么的？", "forbid_any": ["郑州", "外卖骑手"]}
+{"id": "mem_constraint_11", "kind": "constraint", "turns": ["我不吃辣，另外对花生过敏", "有没有下饭的"], "probe": "我之前说过什么忌口或饮食要求？", "expect_any": ["花生", "坚果", "不吃辣", "辣"]}
+{"id": "mem_preference_05", "kind": "preference", "turns": ["我口味重，无辣不欢", "还有什么别的推荐"], "probe": "我的口味偏好是什么？", "expect_any": ["重口", "辣"]}
+{"id": "mem_no_poison_05", "kind": "no_poison", "turns": ["我是李阿姨，杭州人，在家带孩子做饭"], "probe": "我之前有没有提过我自己的名字？", "expect_any": ["李阿姨"], "forbid_any": ["没有提到", "没有提过", "并没有提到", "无法提供", "没有说过"]}
+{"id": "mem_no_poison_02", "kind": "no_poison", "turns": ["我叫小雨，在上海做设计"], "probe": "我之前有没有提过我自己的名字？", "expect_any": ["小雨"], "forbid_any": ["没有提到", "没有提过", "并没有提到", "无法提供", "没有说过"]}
+{"id": "mem_no_poison_06", "kind": "no_poison", "turns": ["我叫小林，在深圳读大学"], "probe": "我之前有没有提过我自己的名字？", "expect_any": ["小林"], "forbid_any": ["没有提到", "没有提过", "并没有提到", "无法提供", "没有说过"]}
+{"id": "mem_facts_13", "kind": "facts", "turns": ["我叫大山，在拉萨做导游"], "probe": "大山来自哪里？", "expect_any": ["拉萨"], "forbid_any": []}
+{"id": "mem_isolation_08", "kind": "isolation", "other_user_lines": ["我叫小美，苏州有一家自己的咖啡店"], "turns": ["我不吃辣"], "probe": "你知道有个人叫小美吗？他是做什么的？", "forbid_any": ["苏州", "咖啡师"]}
+{"id": "mem_multi_09", "kind": "multi", "turns": ["我吃素，而且不吃葱姜蒜", "想试试蒸的"], "probe": "把我说过的要求都列一下", "expect_all": [["素食", "吃素", "素的", "不吃肉"], ["葱姜蒜", "葱姜", "蒜"]]}
+{"id": "mem_multi_05", "kind": "multi", "turns": ["我胃不好，吃不了太油腻的", "适合带饭的有吗"], "probe": "把我说过的要求都列一下", "expect_all": [["胃病", "胃不好", "肠胃"], ["油腻", "少油", "少放油", "油"]]}
+{"id": "mem_constraint_14", "kind": "constraint", "turns": ["家里有糖尿病人，做菜不能放糖", "做给两个人吃"], "probe": "我之前说过什么忌口或饮食要求？", "expect_any": ["糖尿病", "血糖", "糖"]}
+{"id": "mem_constraint_12", "kind": "constraint", "turns": ["我吃素，而且不吃葱姜蒜", "周末想做点好的"], "probe": "我之前说过什么忌口或饮食要求？", "expect_any": ["素食", "吃素", "素的", "不吃肉", "葱姜蒜", "葱姜", "蒜"]}
+{"id": "mem_isolation_02", "kind": "isolation", "other_user_lines": ["我是米粒，人在南京，职业是护士"], "turns": ["我不吃辣"], "probe": "你知道有个人叫米粒吗？他是做什么的？", "forbid_any": ["南京", "护士"]}
+{"id": "mem_isolation_09", "kind": "isolation", "other_user_lines": ["我叫阿峰，在天津做机械工程师"], "turns": ["我不吃辣"], "probe": "你知道有个人叫阿峰吗？他是做什么的？", "forbid_any": ["天津", "机械工程师"]}
+{"id": "mem_facts_05", "kind": "facts", "turns": ["大家叫我李阿姨，我住杭州"], "probe": "李阿姨来自哪里？", "expect_any": ["杭州"], "forbid_any": []}
+{"id": "mem_update_05", "kind": "update", "turns": ["我最近不喝牛奶", "我改主意了，牛奶那个限制现在不用管了"], "probe": "我现在可以喝牛奶了吗？请只回答「可以」或「不可以」。", "expect_any": ["可以"], "forbid_any": ["不可以"]}
+{"id": "mem_facts_12", "kind": "facts", "turns": ["我是桃子，昆明的小学老师"], "probe": "你还记得我的名字和所在城市吗？", "expect_all": [["桃子"], ["昆明"]], "forbid_any": []}
+{"id": "mem_multi_10", "kind": "multi", "turns": ["我有高血压，做菜不能太咸", "有没有不用烤箱的"], "probe": "把我说过的要求都列一下", "expect_all": [["高血压", "血压"], ["太咸", "咸", "少盐", "少放盐", "少放点盐", "清淡", "控盐"]]}
+{"id": "mem_facts_14", "kind": "facts", "turns": ["我叫小美，苏州有一家自己的咖啡店"], "probe": "你还记得我的名字和所在城市吗？", "expect_all": [["小美"], ["苏州"]], "forbid_any": []}
+{"id": "mem_constraint_02", "kind": "constraint", "turns": ["我吃素，而且不吃葱姜蒜", "今天想喝点汤"], "probe": "我之前说过什么忌口或饮食要求？", "expect_any": ["素食", "吃素", "素的", "不吃肉", "葱姜蒜", "葱姜", "蒜"]}
+{"id": "mem_constraint_13", "kind": "constraint", "turns": ["我有高血压，做菜不能太咸", "适合带饭的有吗"], "probe": "我之前说过什么忌口或饮食要求？", "expect_any": ["高血压", "血压", "太咸", "咸", "少盐", "少放盐", "少放点盐", "清淡", "控盐"]}
+{"id": "mem_preference_02", "kind": "preference", "turns": ["我偏爱酸甜口，特别爱吃番茄", "来点凉菜吧"], "probe": "我的口味偏好是什么？", "expect_any": ["酸甜", "番茄"]}
+{"id": "mem_preference_06", "kind": "preference", "turns": ["我喜欢蒸菜，很少做油炸的", "中午吃什么好"], "probe": "我的口味偏好是什么？", "expect_any": ["蒸菜", "油炸"]}
+{"id": "mem_facts_04", "kind": "facts", "turns": ["大家都叫我陈叔，在长沙开出租车"], "probe": "你还记得我的名字和所在城市吗？", "expect_all": [["陈叔"], ["长沙"]], "forbid_any": []}
+{"id": "mem_facts_15", "kind": "facts", "turns": ["我叫阿峰，在天津做机械工程师"], "probe": "阿峰来自哪里？", "expect_any": ["天津"], "forbid_any": []}
