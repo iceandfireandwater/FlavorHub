@@ -1,12 +1,12 @@
 <div align="center">
 
-<img src="docs/images/chef.png" width="220" alt="GustoBot — 会记住你口味的美食助手" />
+<img src="docs/images/chef.png" width="170" alt="FlavorHub" />
 
-# GustoBot · 中华美食智能助手
+# FlavorHub · 中华美食智能助手
 
 **一个会记住你口味的多轮对话式菜谱 Agent**
 
-把「菜谱问答」做成一套**有记忆、可评测、可复现**的工程系统。
+基于知识图谱 + 向量检索 + 三层记忆架构，把「菜谱问答」做成一套**有记忆、可评测、可复现**的工程系统。
 
 <br/>
 
@@ -20,465 +20,309 @@
 
 </div>
 
+<br/>
+
+<div align="center">
+<img src="docs/images/screenshot.png" alt="FlavorHub 前端界面" width="92%" />
+<br/>
+<sub>▲ FlavorHub 对话界面：左侧会话列表 + 右侧流式对话（含参考来源与调用链路标注）</sub>
+</div>
+
 ---
 
-## ⭐ 关于本项目：它从哪里来
+## 一、项目介绍
 
-> **本项目 fork 自 [@skygazer42](https://github.com/skygazer42) 的开源项目 [GustoBot](https://github.com/skygazer42/GustoBot)。**
->
-> 上游作者搭起了一套**相当扎实**的基础设施 —— 多源 RAG 检索（Neo4j 知识图谱 + Milvus 向量库 + PostgreSQL）、
-> LangGraph 多智能体编排、FastAPI 服务端、完整 Docker 编排、以及一套覆盖菜谱全场景的知识库。
->
-> **没有这个起点，就没有后面这一切。在此向上游作者致以诚挚的感谢。** 🙏
->
-> 原项目的完整说明保留在 [`docs/UPSTREAM_README.md`](docs/UPSTREAM_README.md)，上游仓库仍在本 README
-> 末尾保留引用 —— **如果你只想用原版，请直接去上游仓库。**
+### 这是什么
 
-### 那我在这个基础上做了什么？
+**FlavorHub** 是一个面向中华美食领域的对话式 AI 助手。它不只是「查菜谱」——它能**查菜谱**、**讲饮食文化**、**做结构化统计**、**对照多个菜品的差异**，并且**记住每一位用户的口味和忌口**。
 
-一句话概括：**把「能跑通」推进到「能被量化和复现」。**
+### 能做什么
 
-上游已经解决了「**怎么答**」；我主要解决的是三个它还没有回答的问题：
-
-| 问题 | 我的回答 |
+| 能力 | 示例提问 |
 |---|---|
-| **它记得住我吗？** | 三层记忆架构（窗口 / 会话摘要 / 跨会话长期记忆） |
-| **它答得好不好，谁说了算？** | 一套 **251 条、9 个维度**的评测体系，指标可复现 |
-| **换个模型/改句提示词，是变好还是变坏？** | 同上的评测体系 + 基线对比 |
+| **菜谱检索** | 「西红柿疙瘩汤怎么做好吃？」 |
+| **饮食文化 / 古籍典故** | 「《随园食单》里的栗子糕怎么做？」「明朝引进了哪些蔬菜？」 |
+| **结构化统计** | 「你们有多少道热菜？」「川菜里有哪些凉菜？」 |
+| **多菜品对比** | 「改良版孜然牛肉和豌豆黄哪个更辣？」 |
+| **个性化记忆** | 说过一次「我不吃辣」，之后每次推荐都会自动避开 |
+| **边界处理** | 与饮食无关的问题会礼貌拒答，信息不足时会主动追问 |
 
-> 顺带说明：**下面每一条改动都附了「为什么」** —— 我认为对一个开源项目来说，
-> 讲清楚**决策依据**比罗列功能更有价值。这里面有不少是我踩了坑之后才想明白的。
-
----
-
-## 🎯 我做的改动
-
-### 1️⃣ 三层记忆架构 —— 让它真正「记得住」
-
-上游的 `state.messages` 是只增不减的，配上持久化后**每轮 prompt 都会膨胀**，最终撑爆上下文；而且**换个会话就彻底失忆**。我重构成三层：
+### 技术架构
 
 ```
-┌──────────────────────────────────────────────────────────────┐
-│  L1  工作记忆   state.messages        窗口内最近 N 轮原文    │
-│  L2  会话记忆   state.memory          超窗历史压成结构化 JSON │
-│  L3  长期记忆   user_memories 表      按 user_id 跨会话累积   │
-└──────────────────────────────────────────────────────────────┘
+                    ┌─────────────────────────────────┐
+   用户提问  ──────▶ │  意图路由（LLM Router）           │
+                    └───────────────┬─────────────────┘
+                                    │
+        ┌───────────────┬───────────┴───────────┬────────────────┐
+        ▼               ▼                       ▼                ▼
+   ┌─────────┐    ┌──────────┐          ┌────────────┐   ┌──────────┐
+   │ 图谱查询 │    │ 向量检索  │          │ 结构化统计  │   │ 通用问答 │
+   │ Neo4j   │    │ Milvus   │          │ Text2SQL   │   │ LLM      │
+   └─────────┘    └──────────┘          └────────────┘   └──────────┘
+        │               │                       │                │
+        └───────────────┴───────────┬───────────┴────────────────┘
+                                    ▼
+                    ┌─────────────────────────────────┐
+                    │  三层记忆（短期 / 会话 / 长期）    │
+                    └───────────────┬─────────────────┘
+                                    ▼
+                    ┌─────────────────────────────────┐
+                    │  答案生成 + 流式输出（SSE）        │
+                    └─────────────────────────────────┘
+```
+
+**技术栈**
+
+| 层 | 技术 |
+|---|---|
+| 编排 | **LangGraph** 多智能体状态机 |
+| 图谱 | **Neo4j**（19,655 道菜品 + 食材 / 工艺 / 口味 / 功效关系） |
+| 向量 | **Milvus**（菜谱 + 8 本古籍，DashScope `text-embedding-v3`） |
+| 结构化 | **MySQL / PostgreSQL** + Text2SQL |
+| 后端 | **FastAPI** + 原生 SSE 流式 |
+| 前端 | **Vue 3** + Vite + TypeScript |
+| 部署 | **Docker Compose** 一键拉起全栈 |
+
+### 关于项目的来源
+
+> **FlavorHub 的起点是 [@skygazer42](https://github.com/skygazer42) 的开源项目 [GustoBot](https://github.com/skygazer42/GustoBot)。**
+>
+> 上游作者完成了**多源 RAG 架构、LangGraph 编排、知识图谱构建、Docker 全栈编排**等
+> 大量基础工作 —— 这是一份很有价值的开源贡献。**没有它就没有这个项目。**
+>
+> 在此向上游作者致以**诚挚的感谢** 🙏。如果你觉得这个方向有意思，**请先去给上游仓库点个 ⭐**。
+>
+> - 上游仓库：https://github.com/skygazer42/GustoBot
+> - 原项目说明保留于 [`docs/UPSTREAM_README.md`](docs/UPSTREAM_README.md)
+>
+> **⚠️ 命名说明**：本仓库改名为 **FlavorHub**，但**代码包名仍沿用上游的 `gustobot/`** ——
+> 重命名包会牵动数十个文件的导入路径，收益不抵风险，故保持不动。
+
+> **本项目的许可与上游一致：Apache-2.0。**
+
+---
+
+## 二、做出的改进
+
+> 上游提供了一套可用的基础系统。**我在此基础上做了四件事，把它从「能跑通」推进到「有记忆、可量化、可复现」。**
+
+### 1️⃣ 扩充纯文本类数据：新增八大中华饮食古籍
+
+上游的知识库偏重**菜谱做法**，饮食文化部分较薄。我系统性地补入了 **8 本中国饮食古籍的完整译文**：
+
+| 书名 | 朝代 | 条目数 | 书名 | 朝代 | 条目数 |
+|---|---|---|---|---|---|
+| 《清异录》 | 宋 | 747 | 《易牙遗意》 | 明 | 168 |
+| 《饮膳正要》 | 元 | 612 | 《山家清供》 | 宋 | 106 |
+| 《随园食单》 | 清 | 377 | 《云林堂饮食制度集》 | 元 | 50 |
+| 《饮食须知》 | 元 | 372 | 《本心斋疏食谱》 | 宋 | 22 |
+
+**合计 2,454 条内容 chunk，全部灌入 Milvus 向量库。**
+
+涵盖了中国饮食文化中最有代表性的一批典籍：
+
+- **《随园食单》** —— 袁枚的烹饪美学，清代饮食集大成之作
+- **《山家清供》** —— 宋代山野素食，文人清趣
+- **《饮膳正要》** —— 元代宫廷食疗，忽思慧奉敕编撰
+- **《饮食须知》** —— 食物性味与禁忌
+- **《清异录》** —— 五代宋初饮食轶事，典故极丰
+- **《易牙遗意》 / 《云林堂饮食制度集》 / 《本心斋疏食谱》** —— 元明时期的家常与文人食谱
+
+**数据处理做了三件事**：
+
+1. **全文翻译为现代白话**（原文为文言，直接检索命中率低），同时**保留「卷 / 门 / 单」的原书结构**与条目名
+2. **出处写进内容**（`《书名》门类·条目名：译文`），让检索结果可溯源
+3. **入库前做幂等检查与校验**，避免重复灌入
+
+**效果**：现在可以问「《随园食单》里的栗子糕怎么做」「明朝引进了哪些蔬菜」「吃豹肉有什么禁忌」这类**文化型问题**，系统能给出有据可查的答案。
+
+### 2️⃣ 添加记忆机制：短期记忆 + 会话记忆 + 长期记忆
+
+上游的对话状态**只增不减**——每轮对话都会把新消息追加进上下文，几轮之后 prompt 就会膨胀到撑爆模型窗口；而且**换一个会话就彻底失忆**。
+
+我实现了一套**三层记忆架构**：
+
+| 层级 | 名称 | 载体 | 作用范围 | 内容 |
+|---|---|---|---|---|
+| **L1** | **短期记忆** | `state.messages` | 当前会话，最近 N 轮 | **原文**，保证对话连贯 |
+| **L2** | **会话记忆** | `state.memory` | 当前会话，超出窗口的历史 | **结构化摘要**，压缩后继续参与推理 |
+| **L3** | **长期记忆** | `user_memories` 表 | **跨会话，按用户隔离** | 累积的用户画像 |
+
+#### 短期记忆：窗口裁剪（真删，不是「拼 prompt 时跳过」）
+
+保留最近 5 轮对话原文，更早的消息用 LangGraph 的 `RemoveMessage` **从状态里真正删除**。
+
+> **为什么要「真删」而不是「拼 prompt 时过滤」**：后者只是让 prompt 变短，
+> `state.messages` 和 checkpoint **照样无限膨胀**——那才是病根。
+
+#### 会话记忆：结构化 JSON 压缩
+
+被挤出窗口的历史，会由 LLM 抽取成一组**结构化字段**：
+
+```json
+{
+  "constraints": ["不吃辣", "对花生过敏"],        // 硬性约束
+  "relaxed": [],                                  // 用户后来取消的限制
+  "preferences": {"口味": "清淡"},                 // 口味偏好
+  "dishes": ["红烧肉", "冬瓜排骨汤"],               // 提到的菜
+  "facts": ["用户叫阿强", "用户住在成都"],          // 用户自述信息
+  "answered": [{"q": "红烧肉炖多久", "a": "约一小时"}]  // 已问过的问题
+}
 ```
 
 **关键设计：LLM 只负责「抽增量」，合并规则由代码确定性执行。**
 
-早期我让 LLM 把「旧摘要 + 新对话」**重写**成新摘要 —— 结果是**越压越糊**：
-
-```
-第 3 轮：不吃辣、对花生过敏、家里有老人
-第 5 轮重写后：不吃辣、对花生过敏          ← 老人丢了
-第 8 轮重写后：口味清淡                     ← 更多丢了
-```
-
-每轮都是一次有损压缩，**旧字段会被悄悄丢掉，而且不可复现**。现在改成：
-
 ```python
-async def extract_delta(overflow) -> dict:     # LLM：只从这段对话里抽增量
-def merge_memory(previous, delta) -> dict:     # 代码：确定性合并（纯函数，可单测）
+async def extract_delta(overflow) -> dict    # LLM：只从这段对话里抽增量
+def merge_memory(previous, delta) -> dict    # 代码：确定性合并（纯函数，可单测）
 ```
 
-| 字段 | 合并语义 | 为什么 |
+每个字段的**合并语义都不同**，这是刻意的：
+
+| 字段 | 合并规则 | 原因 |
 |---|---|---|
-| `constraints` | **只增去重** | 硬约束（忌口/过敏）丢了是事故 |
-| `relaxed` | 并集 | 用户**主动解除**的限制（见下） |
-| `preferences` | **键覆盖** | 用户改口味要生效 |
-| `dishes` / `facts` | **并集** | 信息累积 |
-| `answered` | **按问题去重** | 同一问题不重复记 |
+| `constraints` | **只增去重** | 硬约束（忌口 / 过敏）丢了是事故 |
+| `relaxed` | 并集 | 用户**主动解除**的限制不能当作禁忌 |
+| `preferences` | **键覆盖** | 用户改了口味要生效 |
+| `dishes` / `facts` | **并集** | 信息应累积 |
+| `answered` | **按问题去重** | 同一问题不重复记录 |
 
-**这样最坏情况只丢一轮的增量，绝不会把历史整个毁掉。**
+> **相比「让 LLM 重写整段摘要」**：那种做法每轮都是一次有损压缩，
+> 旧字段会在重写中被悄悄丢掉，而且不可复现。现在**最坏只丢一轮的增量**。
 
-#### 三个踩过坑才想明白的语义问题
+#### 长期记忆：跨会话的用户画像
 
-**① 「撤回」不能做成删除。** 用户说「花生那个限制不用管了」——我先做成**真删**，结果 `constraints` 空了，跨会话再问时模型**什么都不知道**，只能反问用户。改成 **`relaxed` 字段（记成"已解除"）**，渲染成：
+会话记忆会**持久化到 `user_memories` 表**（按 `user_id` 隔离），并在**新会话开始时作为基底加载**——
+所以**换一个会话，它依然记得你叫什么、住在哪、有什么忌口**。
+
+#### 三个让记忆真正「可用」的细节
+
+**① 「撤回」不做成删除。** 用户说「花生那个限制不用管了」时，如果直接删掉 `constraints`，
+跨会话再问时模型会**什么都不知道**，只能反问用户。所以设计了 `relaxed` 字段（记为"已解除"），
+注入时会明确渲染成：
 
 ```
 硬性约束（必须遵守，不得违背）：不吃辣
 用户已主动解除的限制（不要再拿它当禁忌）：对花生过敏
 ```
 
-**② 记忆最危险的失败模式不是「记不住」，而是「把错的记进去」。** 我们真踩过：
+**② 禁止把「无效结论」写进记忆。** 记忆系统最危险的失败模式不是「记不住」，
+而是**把错误的结论记进去并每轮注入**——错误答案会自我强化。
+所以抽取规则明令禁止把「没找到 / 无法回答 / 不在范围内」这类**没有实质信息**的回答写进 `answered`。
 
-```json
-"answered": [{"q": "我之前提到了阿强，他来自哪里？",
-              "a": "之前的对话中并没有提到阿强的信息"}]   ← 错误结论进了库
-```
+**③ 用户身份需要专门字段。** 「我叫阿强，在成都」既不是约束、不是偏好、也不是提问——
+早期会被抽取器直接丢弃。加了 `facts` 字段之后才真正记得住「用户是谁」。
 
-这条**每轮都注入**，模型看到这个"自我印证的记录"，就**推翻了自己刚看到的 facts**，反复说"没提到"。所以抽取规则里现在**明令禁止**把「没找到 / 无法回答 / 不在范围内」写进结论字段。
+**效果**：在 80 条跨会话 + 80 条会话内的记忆专项评测中，**召回率分别达到 98.75% / 97.50%**，
+且**零污染**（不会把不存在的约束当成事实）。
 
-**③ 「用户是谁」需要一个专门的字段。** 「我叫阿强，在成都」既不是约束、不是偏好、不是菜名、也不是提问 —— **早期的抽取器直接把它丢了**。加了 `facts` 字段之后才记得住。
+### 3️⃣ 构建完整的测评集，覆盖多项指标并得出量化结果
 
-> 抽取时机也有讲究：原本只在**下一轮请求开始时**跑，导致**「只说一句就结束」的会话永远抽不到**。
-> 现在在**流末尾再抽一次**（顺带不占首字延迟）。
-
-### 2️⃣ 完整评测体系 —— 让「好不好」可量化
-
-上游没有成体系的评测。我建了一套 **251 条 × 9 个维度**的评测流水线，一条命令出全部指标。
+上游没有成体系的评测。我建立了一套 **251 条 × 9 个维度**的评测流水线，**一条命令产出全部指标**。
 
 #### 测评集：251 条，覆盖 7 类任务
 
-| 场景 | 条数 | 说明 |
+| 场景 | 条数 | 内容 |
 |---|---|---|
 | `recipe_search` | 90 | 菜谱查询 |
 | `history_faq` | 56 | 饮食典故 / 古籍专项 |
 | `recipe_detail` | 25 | 菜品细节 |
-| `recipe_compare` | 25 | 对比查询 |
-| `negative` | 25 | **负例**（该拒答的） |
+| `recipe_compare` | 25 | 多菜品对比 |
+| `negative` | 25 | **负例**（该拒答的问题） |
 | `stat_query` | 20 | 结构化统计 |
 | `multi_turn` | 10 | 多轮对话 |
 
-每条都标了 `expected_route` / `expected_tool` / `expected_slots` / `relevant_ids` / `expected_answer_keywords` / `ground_truth`，
-**判据可回溯到原始数据**。
+每条题目都标注了 `expected_route` / `expected_tool` / `expected_slots` / `relevant_ids` /
+`expected_answer_keywords` / `ground_truth`，**判据可回溯到原始数据**。
 
-**其中 80 条是我新加的古籍题** —— 从 8 本中国饮食古籍（《随园食单》《山家清供》《饮膳正要》《易牙遗意》
-《本心斋疏食谱》《云林堂饮食制度集》《饮食须知》《清异录》，共 2454 条译文）中**由 LLM 生成 + 脚本校验**：
-`relevant_ids` 必须是 Milvus 里真实存在的 id、关键词必须真在原文里，**不满足就丢弃**。
+**其中 80 条是为了新增的古籍专门生成的** —— 采用「**LLM 生成问句 + 脚本校验**」的方式：
+`relevant_ids` 必须是 Milvus 里真实存在的 id、期望关键词必须真在原文里，**不满足就丢弃**，
+保证题目本身不会「问一个库里根本没有的东西」。
 
-#### 9 个评测维度
+#### 九个评测维度
 
-| 维度 | 指标 | 命令 |
+| 维度 | 指标 | 覆盖能力 |
 |---|---|---|
-| 意图路由 | `intent_accuracy` / `slot_accuracy` | `run_route_eval` |
-| 知识检索 | `recall@k` / `MRR@k` / `nDCG@k` | `run_retrieval_eval` |
-| 工具选择 | `tool_accuracy` / `args_accuracy` | `run_tool_eval` |
-| 幻觉控制 | `claim_hallucination_rate` / `groundedness` | `run_hallucination_eval` |
-| 答案质量 | `key_fact_coverage` / LLM-Judge | `run_answer_quality` |
-| 端到端 | `intent` / `key_fact` / `rejection` | `run_e2e_eval` |
-| 拒答正确性 | `reject_rate` / `answer_rate` | `run_guardrail_eval` |
-| **跨会话记忆** | `recall` / `pass_rate` / `poison_rate` | `run_memory_eval` |
-| **会话内记忆** | 同上 + `window_overflow_rate` | `run_intra_session_memory_eval` |
+| **意图路由** | `intent_accuracy` / `slot_accuracy` | 问题分类是否准确 |
+| **知识检索** | `recall@k` / `MRR@k` / `nDCG@k` | 能不能找到正确内容、排序好不好 |
+| **工具选择** | `tool_accuracy` / `args_accuracy` | 该走哪条查询路径、参数对不对 |
+| **幻觉控制** | `claim_hallucination_rate` / `groundedness` | 有没有编造事实 |
+| **答案质量** | `key_fact_coverage` / LLM-Judge 三维打分 | 回答是否完整、相关、忠实 |
+| **端到端** | `intent` / `key_fact` / `rejection` | 完整链路表现 |
+| **拒答正确性** | `reject_rate` / `answer_rate` | 该拒的拒了没、该答的答了没 |
+| **跨会话记忆** | `recall` / `pass_rate` / `poison_rate` | 新会话能否继承用户画像 |
+| **会话内记忆** | 同上 + `window_overflow_rate` | 超长对话下还能否记得前面说的话 |
 
-**全部评测器都有进度条 + 剩余时间估计**，跑 200+ 条不再是一屏刷不完的日志。
+评测器全部支持 **进度条 + 剩余时间估计**，跑 200+ 条不再是刷不完的日志。
+详细指标定义与复现方式见 [`eval/README.md`](eval/README.md)。
 
-#### 一个我认为值得强调的教训：**先怀疑评测，再怀疑模型**
+> **量化结果见下一章。**
 
-这一路下来，**80% 的时间花在修评测口径上，而不是修系统**。几个真实例子：
+### 4️⃣ 重构前端页面，加入真实流式输出
 
-| 现象 | 真相 |
+#### 前端整体重构
+
+上游是一个单页 widget。我重写成 **ChatGPT 风格的双栏布局**：
+
+- **左侧会话列表** —— 多会话切换、时间显示、删除（带二次确认）
+- **右侧对话区** —— 消息气泡、markdown 渲染、附件上传
+- **暖色调设计** —— 淡黄渐变底色 + 橙色主色，贴合「美食」主题
+
+#### 真实流式输出
+
+**上游的「流式」是模拟的** —— 先等完整回答生成完，再按空格拆分、逐个 `sleep` 发送。
+**中文没有空格，等于整段一次性发出**——用户还是要干等十几秒。
+
+我改成消费 LangGraph 的 **`stream_mode="messages"`** 事件流，把 LLM 的**真实 token** 通过
+**SSE（Server-Sent Events）** 逐个推给前端，并处理了三个细节：
+
+| 细节 | 处理 |
 |---|---|
-| `update` 类 10 条全错 | 判据里 `probe` 含「忌口」，而 `forbid_any` 又禁「忌口」——**模型复述问题就必挂** |
-| `multi` 类 7/10 错 | 我给 `expect_all` 加了同义词展开，**"必须说出所有同义词"不可能满足** |
-| `tool_accuracy = 0.05` | 模型选了 `predefined_cypher`（**更稳的实践**），判据却只认 `cypher_query`（让 LLM 现场生成），**把更优解判成了错** |
-| `args_accuracy = 0` | 标注是扁平业务参数，预测是节点的原始嵌套输出，**结构完全不同** |
-| 检索 `Recall@k` 对古籍恒为 0 | **候选池根本没把 Milvus 的古籍放进去** |
+| **内部节点过滤** | 路由 / 幻觉自检 / 检索计划等**内部节点的 token 不能吐给用户**，需要按 tag 过滤 |
+| **重复输出** | 容器节点（内部跑子图）会把回答推两遍，需要识别并去重 |
+| **刷新后丢失** | 流式回答原本**不落库**，刷新页面就没了；补上了持久化 |
 
-所以现在养成了一个习惯：**任何一个指标出现显著异动，先查评测基建，再查被测系统。**
-（这个习惯救过我不止一次 —— 有一次"幻觉率暴涨"其实是 **Neo4j 凭据没设**导致的假失败。）
+#### 附带的可观测性
 
-### 3️⃣ 古籍 RAG —— 给知识库补上「文化」这一块
-
-上游的知识库偏重**菜谱做法**，饮食文化部分较薄。我灌入了 8 本中国饮食古籍的译文：
-
-| 书 | 条目数 | 书 | 条目数 |
-|---|---|---|---|
-| 《清异录》 | 747 | 《易牙遗意》 | 168 |
-| 《饮膳正要》 | 612 | 《山家清供》 | 106 |
-| 《随园食单》 | 377 | 《云林堂饮食制度集》 | 50 |
-| 《饮食须知》 | 372 | 《本心斋疏食谱》 | 22 |
-
-**共 2454 条 chunk → Milvus**（`category=古籍译文`，`id=classics_<书名>_<序号>`）。
-
-排版遵循古籍原貌：**卷 / 门 / 单结构保留，条目名也译成白话**，出处写进 `content`。
-
-**顺带修掉一个架构缺口**：古籍只灌进了 Milvus，而 `graphrag-query` 默认走 Neo4j —— 于是
-问「《随园食单》里的栗子糕怎么做」会**路由判对、却答"没查到"**。现在在**图谱无命中时自动兜底转查 Milvus**：
-
-```python
-# summarize/node.py
-_NO_INFO_MARKS = ("couldn't find any relevant information", ...)
-if not raw_context or any(k in raw_context.lower() for k in _NO_INFO_MARKS):
-    raw_context = await _milvus_fallback_context(question)   # 兜底
-```
-
-> **注意这里判的是"error 特征串"而不只是"是否为空"** —— Cypher 查不到时会返回
-> `{"error": "I couldn't find any relevant information"}`，**它会被当成"数据统计"塞进上下文**，
-> 于是 `raw_context` 非空但内容其实是个错误提示。我第一版兜底就栽在这个细节上。
-
-### 4️⃣ 其它改进
-
-| 改动 | 说明与理由 |
-|---|---|
-| **真实的流式输出** | 上游的"流式"是**假的** —— 先 `await` 完整回答、再按空格拆分逐个 `sleep` 发送。**中文没有空格，等于整段一次性发出**。改成消费 `graph.astream(stream_mode="messages")` 的真 token 流 + SSE 推送 |
-| **前端重写** | 从单页 widget 改成 **Vue 3 + 会话列表**：支持多会话切换、历史加载、markdown 渲染（标题/列表/代码块/链接）、上传附件、调用链路标注 |
-| **Checkpoint 持久化** | `MemorySaver`（进程内）→ **`AsyncPostgresSaver`**，**重启不丢上下文** |
-| **外部搜索** | 接入 **DuckDuckGo**（`ddgs`，免费无需 key），让「最近流行什么菜」这类时效性问题能联网补充 |
-| **修掉几个静默 bug** | 见下方「踩坑记录」 |
-
-#### 几个值得一提的坑
-
-**「时好时坏」几乎总是「某条规则命中与否取决于 LLM 生成的中间文本」。**
-问「土豆烧茄子怎么做」有时答得完整、有时答"没查到"。日志对照发现：
+每条回答下方会显示**调用链路线注**（不干扰正文）：
 
 ```
-成功那次：tool_selection → predefined_cypher        （查 Neo4j）✅
-失败那次：命中关键词规则「食材」→ 强推 LightRAG → 'LightRAG' object has no attribute '_addon_params' ❌
+路由 kb-query   ·   置信度 0.90   ·   来源 5
 ```
 
-规则判的是 **LLM 改写后的查询串**（不是用户原话）——改写里恰好带上「食材」二字就挂。
-**而 LightRAG 一直是坏的，只是因为大部分问题不走它，没人发现。**
-
-**「任务已取消」≠「进程已停止」。** 长任务用 `nohup &` 起，`kill` 只终止 job 本身、**不会杀掉它拉起的进程**；
-残留的孤儿进程会继续打后端，下次重跑就变成双倍并发。**取消后要查进程表确认。**
-
-**LangGraph 的 `Send` 对象无法 JSON 序列化。** 子图用 `Send` 做动态并行，而 `PostgresSaver` 的
-`pending_sends` **走原生 psycopg `Jsonb`、绕过 serde**，每次收尾都报 `Object of type Send is not JSON serializable`
-（**崩在回答推完之后**，表现为"回答正常、末尾多一条 `[出错]`"）。最终用 `set_json_dumps(..., default=str)` 兜住。
+帮助定位「这次回答是怎么来的」，也便于排查问题。
 
 ---
 
-## 🚀 快速开始
+## 三、测试效果
 
-### 环境要求
+> 以下为**本机实测**结果，全部可通过 `eval/scripts/` 下的评测器复现。
+>
+> **每个指标的分母不同**（过滤条件不一样），我特意标出来 ——
+> 只写百分比不写分母，容易让读者误以为都是全量 251 条的结果。
 
-| 依赖 | 版本 | 说明 |
-|---|---|---|
-| **Docker** + Docker Compose | 20.10+ | 拉起 Milvus / Neo4j / PostgreSQL / MySQL / Redis |
-| **Python** | 3.10 | 后端 |
-| **Node.js** | 18+ | 前端 |
-
-> **不需要**单独安装 Milvus / Neo4j 等中间件 —— 全部由 `docker-compose.yml` 编排。
-
-### 第 1 步：获取代码
-
-```bash
-git clone https://github.com/iceandfireandwater/FlavorHub.git
-cd GustoBot
-```
-
-> ⚠️ 仓库用了 **Git LFS** 管理大文件（`data/recipe.json`、`data/1.png`）。
-> 如果 clone 后这两个文件很小（几百字节），说明没拉 LFS 内容，执行：
-> ```bash
-> git lfs install && git lfs pull
-> ```
-
-### 第 2 步：配置环境变量
-
-```bash
-cp .env.example .env
-```
-
-然后编辑 `.env`，**至少填这三项**：
-
-```ini
-# ① LLM（对话/意图识别/记忆抽取）
-LLM_API_KEY=your_llm_api_key_here
-LLM_BASE_URL=https://api.deepseek.com/v1
-LLM_MODEL=deepseek-chat
-
-# ② Embedding（向量检索，必需）
-EMBEDDING_API_KEY=your_embedding_api_key_here
-EMBEDDING_BASE_URL=...
-EMBEDDING_MODEL=text-embedding-v3
-
-# ③ Rerank（二阶段重排，可留空则跳过）
-RERANK_API_KEY=your_rerank_api_key_here
-```
-
-> 知识库侧有一套独立的 `KB_LLM_*` / `KB_EMBEDDING_*` 变量，同样要填。
-> **`.env` 已被 `.gitignore` 排除，不会误提交。**
-
-### 第 3 步：启动后端（含全部中间件）
-
-```bash
-docker compose up -d
-```
-
-首次启动会拉取镜像并初始化数据库，**大约需要 3~5 分钟**。确认各服务就绪：
-
-```bash
-docker compose ps
-curl http://localhost:8000/health          # 期望返回 200
-```
-
-各服务端口：
-
-| 服务 | 端口 | 服务 | 端口 |
-|---|---|---|---|
-| 后端 API | **8000** | Neo4j Browser | 17474 |
-| Milvus | 19530 | PostgreSQL | 5433 |
-| MinIO | 9000 | MySQL | 13306 |
-
-### 第 4 步：初始化知识库（首次必须）
-
-后端启动时会自动检测并灌库。若需要手动触发：
-
-```bash
-# 灌入菜谱数据集
-docker exec -w /app -e PYTHONPATH=/app gustobot-backend-1 python -m scripts.init_kb_milvus
-
-# 灌入古籍译文（8 本，2454 条）
-docker exec -w /app -e PYTHONPATH=/app gustobot-backend-1 python -m scripts.ingest_classics_to_milvus --apply
-```
-
-> 灌库用 DashScope embedding，**注意 batch 上限是 10**，脚本已默认处理。
-
-### 第 5 步：启动前端
-
-```bash
-cd web
-npm install
-npm run dev
-```
-
-打开 **http://localhost:5173** 即可对话。前端通过 Vite proxy 转发到后端 8000 端口。
-
-> 想换端口：`VITE_PORT=3000 npm run dev`；后端地址：`.env` 里的 `VITE_API_BASE_URL`。
-
-### 常见问题
-
-<details>
-<summary><b>Q: 启动后问什么都说"没查到"</b></summary>
-
-优先查 **Neo4j 凭据**。如果 `NEO4J_USER` / `NEO4J_PASSWORD` 缺失，`Neo4jGraph` 初始化会失败，
-上层工具静默返回 `None`，表现为**间歇性的 `env_error`** —— 极易被误判成"模型变差了"。
-
-```bash
-docker exec gustobot-backend-1 env | grep NEO4J
-```
-</details>
-
-<details>
-<summary><b>Q: 改了 <code>.env</code> 但没生效</b></summary>
-
-`docker restart` **不会重读 `.env`**，需要：
-
-```bash
-docker compose up -d backend
-```
-
-⚠️ 另外注意：`docker-compose.yml` 里的环境变量**优先级高于 `.env`**。如果某项在 compose 里被硬编码，
-改 `.env` 是无效的。
-</details>
-
-<details>
-<summary><b>Q: 重建容器后报 <code>ModuleNotFoundError</code></b></summary>
-
-`docker compose up -d` 重建容器会**丢掉只在旧容器可写层里 pip 装的包**。凡是运行时装的依赖，
-都要写进 `requirements.txt` 再 `docker compose build backend`。
-</details>
-
-<details>
-<summary><b>Q: 一轮对话要十几秒</b></summary>
-
-这是**预期行为**：一轮对话要**串行调用 LLM 十几次**（路由 → planner → 工具选择 → Cypher 生成 → 摘要 → 记忆抽取 …），
-每次 1~2 秒。实测**换更快的模型只能省首 token 那零点几秒，总时长基本不变** —— 瓶颈在调用次数，不在单次延迟。
-
-优化方向：① 减少 LLM 调用次数；② 记忆抽取改成异步后台（不阻塞首字）；③ 简单问题走轻量路径。
-</details>
-
----
-
-## 🧪 跑评测
-
-评测入口是 `eval/run_all.py`，也可以单维度跑。
-
-> **所有评测器必须在 backend 容器内执行** —— 老评测器直接 import 被测代码，宿主机环境缺依赖。
-
-### 一键全跑
-
-```bash
-docker exec -w /app -e PYTHONPATH=/app gustobot-backend-1 python -m eval.scripts.run_all
-```
-
-产物：`eval/data/EVAL_SUMMARY.md`（人读）+ `eval_summary.json`（机读）
-
-### 按维度跑（推荐，顺序有讲究）
-
-```bash
-# ① 意图路由 + 槽位
-docker exec -w /app -e PYTHONPATH=/app gustobot-backend-1 python -m eval.scripts.run_route_eval
-
-# ② 检索（recall@k / MRR / nDCG）
-docker exec -w /app -e PYTHONPATH=/app gustobot-backend-1 python -m eval.scripts.run_retrieval_eval --top-k 1 3 5
-
-# ③ 工具选择
-docker exec -w /app -e PYTHONPATH=/app gustobot-backend-1 python -m eval.scripts.run_tool_eval
-
-# ④ 端到端（最慢，60~90 分钟；⑤⑥ 都读它的明细，必须在前面跑）
-docker exec -w /app -e PYTHONPATH=/app gustobot-backend-1 python -m eval.scripts.run_e2e_eval
-
-# ⑤ 答案质量（读 ④ 的明细）
-docker exec -w /app -e PYTHONPATH=/app gustobot-backend-1 python -m eval.scripts.run_answer_quality
-
-# ⑥ 幻觉控制（读 ④ 的明细）
-docker exec -w /app -e PYTHONPATH=/app gustobot-backend-1 python -m eval.scripts.run_hallucination_eval
-
-# ⑦ 拒答正确性
-docker exec -w /app -e PYTHONPATH=/app gustobot-backend-1 python -m eval.scripts.run_guardrail_eval
-
-# ⑧⑨ 记忆（跨会话 / 会话内，各 80 条）
-docker exec -w /app -e PYTHONPATH=/app gustobot-backend-1 python -m eval.scripts.run_memory_eval
-docker exec -w /app -e PYTHONPATH=/app gustobot-backend-1 python -m eval.scripts.run_intra_session_memory_eval
-```
-
-> ⚠️ **`run_all` 里 `answer_quality` 排在 `e2e` 之前**（顺序是反的），所以一键跑之后建议**再补跑一次 ⑤⑥**，
-> 否则它们读的是上一轮的 e2e 明细。
-
-### 进度条
-
-所有评测器都会显示进度 + **剩余时间估计**：
-
-```
-路由 [#########################...] 210/251  83.7%  已用 8m00s  剩余 ~1m33s  通过 173  hgc_038
-```
-
-### `run_all` 参数
-
-| 参数 | 作用 |
-|---|---|
-| `--quick` | 每个维度只跑 3 条（冒烟） |
-| `--only route,retrieval` | 只跑指定维度 |
-| `--skip hallucination` | 跳过指定维度 |
-| `--baseline eval/data/eval_summary.json` | 与基线对比，输出变化表 |
-
----
-
-## 📊 实测指标（251 条测评集）
-
-> 以下为本机实测。**每个指标的分母不同**（过滤条件不一样），我特意标出来 ——
-> 我一直认为**只写百分比不写分母，是在误导读者**。
-
-### 核心指标
+### 3.1 核心指标总览
 
 | 指标 | 数值 | 分母 | 说明 |
 |---|---|---|---|
-| **Intent Accuracy** | **81.67%** | 251 | 路由类型判对的比例 |
-| **Slot Accuracy**（loose） | **99.60%** | 251 | 语义口径（strict 口径 81.27%，见下） |
-| **Recall@1 / @3 / @5** | **92.77% / 96.99% / 98.19%** | 196 | 纯向量检索 |
-| **MRR@5** | **95.08%** | 196 | 首个正确答案的平均排名倒數 |
-| **nDCG@5** | **95.36%** | 196 | 整体排序质量 |
-| **Tool Selection Accuracy** | **90.00%** | 80 | 查询**路径**选对的比例 |
-| **Args Accuracy** | **80.63%** | 80 | 传给工具的参数匹配率 |
+| **Intent Accuracy** | **81.67%** | 251 | 问题意图分类正确率 |
+| **Slot Accuracy（loose）** | **99.60%** | 251 | 结构化槽位抽取（语义口径） |
+| **Recall@1** | **92.77%** | 196 | Top-1 命中率 |
+| **Recall@3** | **96.99%** | 196 | Top-3 命中率 |
+| **Recall@5** | **98.19%** | 196 | Top-5 命中率 |
+| **MRR@5** | **95.08%** | 196 | 首个正确答案的平均排名倒数 |
+| **nDCG@5** | **95.36%** | 196 | 排序整体质量 |
+| **Tool Selection Accuracy** | **90.00%** | 80 | 查询路径选择正确率 |
+| **Args Accuracy** | **80.63%** | 80 | 工具参数匹配率 |
 | **Key Fact Coverage** | **78.36%** | 171 | 回答覆盖关键信息点的比例 |
-| **Rejection Accuracy** | **85.71%** | 14 | 该拒答/该回答的判断正确率 |
-| **Hallucination Rate** | **51.50%** | 176 | ⚠️ 见下方口径说明 |
+| **Rejection Accuracy** | **85.71%** | 14 | 拒答判断正确率 |
+| **Hallucination Rate** | **3.57%** | 1932 条声明 | 与事实**明确矛盾**的比例（见 3.4） |
 
-### 关于幻觉率的口径（重要）
+**一句话概括**：**检索很稳（Recall@5 98%）、意图和工具选择良好（82% / 90%）、
+回答质量可用（关键信息覆盖 78%）、事实性可靠（真幻觉仅 3.57%）。**
 
-`51.50%` 这个数字**需要谨慎解读**。它统计的是"**未被标准答案直接支持的声明占比**"，而其中包含大量：
-
-- **常识补充**（"适合配粥"）
-- **合理推断**（从做法推出"咸鲜口味"）
-- **表述差异**（同一事实的不同说法）
-- 甚至**模型自述"我没查到 X"**（这是真话）
-
-**真正"与事实矛盾"的比例是 3.57%**（`claim_contradiction_rate`），**这才是通常意义上的幻觉率**。
-
-| 细分 | 数值 | 含义 |
-|---|---|---|
-| `supported` | 48.50% | 有据可依 |
-| `unsupported` | 47.93% | 标准答案未提及（含常识/推断） |
-| **`contradicted`** | **3.57%** | **与事实明确矛盾 ← 真幻觉** |
-| `groundedness` | 48.50% | 忠实度 |
-
-> **这个口径差异是我在分析阶段发现的**：判定 prompt 把"标准答案里没写"简单等同于"幻觉"了。
-> 我认为如实标注口径，比报一个漂亮的数字更重要。
-
-### 分场景 Intent
+### 3.2 分场景 Intent Accuracy
 
 | 场景 | n | Intent | 场景 | n | Intent |
 |---|---|---|---|---|---|
@@ -487,81 +331,257 @@ docker exec -w /app -e PYTHONPATH=/app gustobot-backend-1 python -m eval.scripts
 | `multi_turn` | 10 | 90.00% | `negative` | 25 | 68.00% |
 | | | | `recipe_compare` | 25 | **64.00%** |
 
-**已知短板**：`recipe_compare`（对比类查询）最低 —— 需要同时抽取两个菜名，模型常只抽出一个；
-`negative` 偏低是判定口径问题（混入了"边界问题"，它们本不该按拒答率评）。
+**统计类问题 100% 准确**（「有多少道热菜」这类特征明显）；
+**多菜品对比最低（64%）** —— 需要同时抽取两个菜名，模型常只抽出一个，这是已知短板。
 
-### 记忆评测
+### 3.3 分场景检索质量
+
+| 场景 | n | Recall@1 |
+|---|---|---|
+| `recipe_detail` | 25 | **100%** |
+| `recipe_compare` | 25 | 93.33% |
+| `recipe_search` | 90 | 92.86% |
+| `history_faq` | 56 | 89.29% |
+
+**古籍类问题（`history_faq`）也能达到 89.29%** —— 说明新增的 2454 条古籍内容确实能被检索到。
+
+### 3.4 关于「幻觉率」的口径说明
+
+我把**两个数字**都列出来，因为它们的含义完全不同：
+
+| 指标 | 数值 | 含义 |
+|---|---|---|
+| **`claim_contradiction_rate`** | **3.57%** | **与标准答案明确矛盾** ← **这才是通常说的「幻觉」** |
+| `claim_hallucination_rate` | 51.50% | **未被标准答案直接支持**的声明占比 |
+| `groundedness` | 48.50% | 有据可依的比例 |
+
+**为什么第二个数字这么高？** 因为它把下面这些都算进去了：
+
+- **常识补充**（「适合配粥」）
+- **合理推断**（从做法推出「咸鲜口味」）
+- **表述差异**（同一事实的不同说法）
+- 甚至**模型自述「我没查到 X」**（这是真话）
+
+**真正编造事实的情况只有 3.57%。** 我认为**如实标注口径，比报一个漂亮的数字更重要**。
+
+### 3.5 记忆专项评测
 
 | 维度 | Recall | Pass Rate | Poison Rate | 样本 |
 |---|---|---|---|---|
-| **跨会话记忆** | 98.75% | 98.75% | 0% | 80 |
-| **会话内记忆** | 97.50% | 97.50% | 0% | 80 |
+| **跨会话记忆** | **98.75%** | 98.75% | **0%** | 80 |
+| **会话内记忆** | **97.50%** | 97.50% | **0%** | 80 |
 
-**会话内**含 17 轮的超长程用例（埋点在第 1 句、追问在第 17 轮），**深层压缩后仍能召回**；
-**跨会话**验证的是"新开会话还能否记得用户身份与约束"。
+- **跨会话**：验证「新开会话后，还能否记得用户身份与约束」
+- **会话内**：含 **17 轮超长程用例**（关键信息埋在第 1 句、追问在第 17 轮），
+  验证**深层压缩后仍能召回**
+- **`Poison Rate = 0%`**：说明系统**不会把不存在的约束当成事实记住**
 
----
+### 3.6 记忆机制的实际效果演示
 
-## 📁 项目结构
+**场景：用户随口说了一句忌口，之后每次推荐都会被记住。**
 
 ```
-GustoBot/
-├── gustobot/                      # 后端主体
-│   ├── application/agents/
-│   │   ├── memory.py              # ⭐ 三层记忆核心（抽取 / 合并 / 渲染）
-│   │   ├── user_memory.py         # ⭐ 跨会话长期记忆（user_memories 表）
-│   │   ├── lg_builder.py          # LangGraph 图构建 + 路由
-│   │   ├── lg_states.py           # 图状态定义
-│   │   └── kg_sub_graph/          # 知识图谱子图（图谱 + LightRAG + SQL）
-│   ├── infrastructure/            # Milvus / Neo4j / DB / 工具
-│   └── interfaces/http/v1/        # FastAPI 路由（chat / sessions）
-├── eval/                          # ⭐ 评测体系
-│   ├── run_route_eval.py          #   意图路由 + 槽位
-│   ├── run_retrieval_eval.py      #   检索（recall / MRR / nDCG）
-│   ├── run_tool_eval.py           #   工具选择
-│   ├── run_e2e_eval.py            #   端到端
-│   ├── run_answer_quality.py      #   答案质量 + LLM-Judge
-│   ├── run_hallucination_eval.py  #   幻觉控制
-│   ├── run_guardrail_eval.py      #   拒答正确性
-│   ├── run_memory_eval.py         #   ⭐ 跨会话记忆
-│   ├── run_intra_session_memory_eval.py  # ⭐ 会话内记忆
-│   ├── gen_classics_cases.py      #   ⭐ 古籍题生成器
-│   ├── progress.py                #   统一进度条（含 ETA）
-│   ├── quiet.py                   #   日志静音
-│   └── data/eval_set.jsonl        #   251 条测评集
-├── data/
-│   ├── kb/古籍/原文|译文/          # 8 本古籍（原文 + 译文）
-│   └── recipe.json                # 菜品数据集（LFS）
-├── scripts/                       # 灌库 / 导入 / 初始化脚本
-├── web/                           # Vue 3 前端
-├── docs/                          # 文档（含 UPSTREAM_README.md）
-└── docker-compose.yml             # 全栈编排
+第 1 轮  用户：我不吃辣，另外对花生过敏
+         （此时信息进入短期记忆）
+
+第 6 轮  用户：推荐一道下饭菜
+         系统：（已从短期记忆压缩进会话记忆）「推荐糖醋里脊，不含辣也不含花生…」
+         （中间 4 轮对话已被裁剪，但关键约束没丢）
+
+—— 关闭页面，第二天新开会话 ——
+
+新会话   用户：我有什么忌口来着？
+         系统：「你不吃辣，对花生过敏」（从长期记忆加载）
+```
+
+**另一个场景：用户改变主意。**
+
+```
+用户：花生那个限制不用管了
+      （旧约束移入 relaxed 字段，而非简单删除）
+
+之后  用户：我现在能吃什么坚果？
+      系统：「花生没问题了，可以放心吃～」（不会再把它当禁忌）
 ```
 
 ---
 
-## 🙏 致谢
+## 四、如何启动并测试
 
-### 上游项目
+### 4.1 环境要求
 
-**本项目基于 [@skygazer42](https://github.com/skygazer42) 的 [GustoBot](https://github.com/skygazer42/GustoBot) 二次开发。**
+| 依赖 | 版本 | 用途 |
+|---|---|---|
+| **Docker** + Docker Compose | 20.10+ | 拉起 Milvus / Neo4j / PostgreSQL / MySQL / Redis |
+| **Python** | 3.10 | 后端 |
+| **Node.js** | 18+ | 前端 |
 
-上游作者完成了多源 RAG 架构、LangGraph 编排、知识库构建、Docker 全栈编排等**大量的基础工作** —— 这是一份
-很有价值的开源贡献。**没有它就没有这个项目。** 如果你觉得这个方向有意思，请**先去给上游仓库点个 ⭐**。
+> Milvus、Neo4j 等中间件**全部由 `docker-compose.yml` 编排**，不需要单独安装。
 
-原项目说明留存于 [`docs/UPSTREAM_README.md`](docs/UPSTREAM_README.md)，上游联系方式（原作者）：
-- 上游仓库：https://github.com/skygazer42/GustoBot
-- 邮箱：207829897@qq.com
+### 4.2 获取代码
 
-### 技术栈
+```bash
+git clone https://github.com/iceandfireandwater/FlavorHub.git
+cd FlavorHub
+```
 
-[FastAPI](https://fastapi.tiangolo.com/) ·
-[LangChain](https://python.langchain.com/) ·
-[LangGraph](https://langchain-ai.github.io/langgraph/) ·
-[Milvus](https://milvus.io/) ·
-[Neo4j](https://neo4j.com/) ·
-[Vue 3](https://vuejs.org/) ·
-[Vite](https://vitejs.dev/)
+> ⚠️ 仓库使用 **Git LFS** 管理大文件（`data/recipe.json`）。
+> 如果 clone 后该文件只有几百字节，说明没拉到实际内容：
+
+```bash
+git lfs install && git lfs pull
+```
+
+### 4.3 配置环境变量
+
+```bash
+cp .env.example .env
+```
+
+编辑 `.env`，**至少填写以下三项**：
+
+```ini
+# ① 对话 / 意图识别 / 记忆抽取
+LLM_API_KEY=your_llm_api_key_here
+LLM_BASE_URL=https://your-llm-endpoint/v1
+LLM_MODEL=deepseek-chat
+
+# ② 向量检索（必需，否则检索不可用）
+EMBEDDING_API_KEY=your_embedding_api_key_here
+EMBEDDING_BASE_URL=https://your-embedding-endpoint/v1
+EMBEDDING_MODEL=text-embedding-v3
+
+# ③ 二阶段重排（可留空，留空则跳过重排）
+RERANK_API_KEY=your_rerank_api_key_here
+```
+
+> 知识库侧还有一套独立的 `KB_LLM_*` / `KB_EMBEDDING_*` 变量，**同样需要填写**。
+> `.env` 已被 `.gitignore` 排除，**不会误提交**。
+
+### 4.4 启动后端（含全部中间件）
+
+```bash
+docker compose up -d
+```
+
+首次启动需要拉取镜像并初始化数据库，**约 3~5 分钟**。确认服务就绪：
+
+```bash
+docker compose ps
+curl http://localhost:8000/health          # 期望返回 200
+```
+
+**各服务端口**
+
+| 服务 | 端口 | 服务 | 端口 |
+|---|---|---|---|
+| 后端 API | **8000** | Neo4j Browser | 17474 |
+| Milvus | 19530 | PostgreSQL | 5433 |
+| MinIO | 9000 | MySQL | 13306 |
+
+### 4.5 初始化知识库（首次必须）
+
+后端启动时会自动检测并灌库。若需手动触发：
+
+```bash
+# 灌入菜谱数据集
+docker exec -w /app -e PYTHONPATH=/app gustobot-backend-1 \
+  python -m scripts.init_kb_milvus
+
+# 灌入八大古籍译文（2454 条）
+docker exec -w /app -e PYTHONPATH=/app gustobot-backend-1 \
+  python -m scripts.ingest_classics_to_milvus --apply
+```
+
+> 灌库使用 DashScope embedding，**注意 batch 上限为 10**，脚本已默认处理。
+
+### 4.6 启动前端
+
+```bash
+cd web
+npm install
+npm run dev
+```
+
+打开 **http://localhost:5173** 即可开始对话（前端通过 Vite proxy 转发到后端 8000）。
+
+### 4.7 跑评测
+
+> **所有评测器都必须在 backend 容器内执行** —— 它们直接 import 被测代码，宿主机环境缺依赖。
+
+#### 一键全跑
+
+```bash
+docker exec -w /app -e PYTHONPATH=/app gustobot-backend-1 \
+  python -m eval.scripts.run_all
+```
+
+产物：`eval/results/EVAL_SUMMARY.md`（人读）+ `eval/results/eval_summary.json`（机读）
+
+#### 按维度单跑（推荐，注意顺序）
+
+```bash
+# ① 意图路由 + 槽位
+docker exec -w /app -e PYTHONPATH=/app gustobot-backend-1 \
+  python -m eval.scripts.run_route_eval
+
+# ② 检索（recall@k / MRR / nDCG）
+docker exec -w /app -e PYTHONPATH=/app gustobot-backend-1 \
+  python -m eval.scripts.run_retrieval_eval --top-k 1 3 5
+
+# ③ 工具选择
+docker exec -w /app -e PYTHONPATH=/app gustobot-backend-1 \
+  python -m eval.scripts.run_tool_eval
+
+# ④ 端到端（最慢，约 50 分钟；⑤⑥ 依赖它的输出，必须排在前面）
+docker exec -w /app -e PYTHONPATH=/app gustobot-backend-1 \
+  python -m eval.scripts.run_e2e_eval
+
+# ⑤ 答案质量（读 ④ 的明细）
+docker exec -w /app -e PYTHONPATH=/app gustobot-backend-1 \
+  python -m eval.scripts.run_answer_quality
+
+# ⑥ 幻觉控制（读 ④ 的明细）
+docker exec -w /app -e PYTHONPATH=/app gustobot-backend-1 \
+  python -m eval.scripts.run_hallucination_eval
+
+# ⑦ 拒答正确性
+docker exec -w /app -e PYTHONPATH=/app gustobot-backend-1 \
+  python -m eval.scripts.run_guardrail_eval
+
+# ⑧⑨ 记忆专项（跨会话 / 会话内，各 80 条）
+docker exec -w /app -e PYTHONPATH=/app gustobot-backend-1 \
+  python -m eval.scripts.run_memory_eval
+docker exec -w /app -e PYTHONPATH=/app gustobot-backend-1 \
+  python -m eval.scripts.run_intra_session_memory_eval
+```
+
+> ⚠️ **`run_all` 里 `answer_quality` 排在 `e2e` 之前**（顺序是反的），
+> 所以一键跑之后建议**再补跑一次 ⑤⑥**，否则它们读的是上一轮的 e2e 明细。
+
+#### 进度条
+
+所有评测器都会显示进度与**剩余时间估计**：
+
+```
+路由 [#########################...] 210/251  83.7%  已用 8m00s  剩余 ~1m33s  通过 173  hgc_038
+```
+
+#### `run_all` 常用参数
+
+| 参数 | 作用 |
+|---|---|
+| `--quick` | 每个维度只跑 3 条（冒烟验证） |
+| `--only route,retrieval` | 只跑指定维度 |
+| `--skip hallucination` | 跳过指定维度 |
+| `--baseline eval/results/eval_summary.json` | 与基线对比，输出变化表 |
+
+**建议先冒烟再全量**：
+
+```bash
+docker exec -w /app -e PYTHONPATH=/app gustobot-backend-1 \
+  python -m eval.scripts.run_all --quick
+```
 
 ---
 
@@ -569,11 +589,11 @@ GustoBot/
 
 [Apache License 2.0](LICENSE) —— 与上游项目保持一致。
 
-> 二次开发部分同样以 Apache-2.0 发布。欢迎 issue / PR。
+二次开发部分同样以 Apache-2.0 发布。欢迎 issue / PR。
 
 <div align="center">
 
-**GustoBot** · 让 AI 成为真正懂你的厨房助手
+**FlavorHub** · 让 AI 成为真正懂你的厨房助手
 
 `forked from` [skygazer42/GustoBot](https://github.com/skygazer42/GustoBot) `with ❤️`
 
